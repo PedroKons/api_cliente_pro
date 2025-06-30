@@ -6,3 +6,121 @@ datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
+
+
+model User {
+  id  String @id @default(uuid())
+  brand_id String
+  name String
+  email String @unique
+  password String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  brand Brand @relation(fields: [brand_id], references: [id])
+}
+
+model Brand {
+  id  String @id @default(uuid())
+  name String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  users User[]
+  clients Client[]
+  products Product[]
+  sales Sale[]
+}
+
+model Address {
+  id  String @id @default(uuid())
+  street String
+  number String
+  complement String
+  neighborhood String
+  city String
+  state String
+  zip_code String
+  country String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client Client?
+}
+
+model Client {
+  id  String @id @default(uuid())
+  brand_id String
+  client_type String
+  full_name String
+  date_of_birth DateTime
+  cpf String
+  company_name String // Razão Social
+  fantasy_name String // Nome Fantasia
+  cnpj String
+  state_registration String // Inscrição Estadual
+  state_membership String // Inscrição Estadual
+  address_id String @unique
+  phone String
+  telephone String
+  email String
+  enterprise_type String
+  observations String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  brand Brand @relation(fields: [brand_id], references: [id])
+  address Address @relation(fields: [address_id], references: [id])
+  sales Sale[]
+}
+
+model Product {
+  id String @id @default(uuid())
+  brand_id String
+  type_of_cold_storage String
+  dimentions String
+  capacity Float
+  observations String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand Brand @relation(fields: [brand_id], references: [id])
+  sale Sale?
+}
+
+
+model Sale {
+  id String @id @default(uuid())
+  brand_id String
+  client_id String
+
+  sale_date DateTime
+  origin_sale String
+  seller String
+
+  sale_value Float
+  payment_method String
+  parcel_number Int
+
+  products_id String @unique
+
+  delivery_date DateTime
+  responsible_for_installation String
+  obvervations_technical String
+
+  warranty_time Int
+  status_sale String
+  called_technical String
+
+  observations String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client Client @relation(fields: [client_id], references: [id])
+  brand Brand @relation(fields: [brand_id], references: [id])
+  products Product @relation(fields: [products_id], references: [id])
+}
+
+
