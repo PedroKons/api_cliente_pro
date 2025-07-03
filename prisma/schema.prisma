@@ -51,7 +51,7 @@ model Address {
 model Client {
   id  String @id @default(uuid())
   brand_id String
-  client_type String
+  client_type String // Pessoa Física ou Jurídica
   full_name String
   date_of_birth DateTime
   cpf String
@@ -64,7 +64,7 @@ model Client {
   phone String
   telephone String
   email String
-  enterprise_type String
+  enterprise_type String // Industria ou Comércio
   observations String
 
   createdAt DateTime @default(now())
