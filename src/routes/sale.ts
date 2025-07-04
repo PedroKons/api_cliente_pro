@@ -110,4 +110,145 @@ export default async function sale(fastify: FastifyInstance) {
             });
         }
     });
+
+    // Rota para deletar uma venda
+    fastify.delete('/delete/:saleId', {
+        preHandler: async (request, reply) => {
+            try {
+                await request.jwtVerify();
+            } catch (err) {
+                reply.send(err);
+            }
+        }
+    }, async (request, reply) => {
+        try {
+            const { saleId } = request.params as { saleId: string };
+
+            if (!saleId) {
+                return reply.status(400).send({
+                    error: 'ID da venda é obrigatório'
+                });
+            }
+
+            // Verificar se a venda existe
+            const existingSale = await prisma.sale.findUnique({
+                where: {
+                    id: saleId
+                },
+                include: {
+                    products: true
+                }
+            });
+
+            if (!existingSale) {
+                return reply.status(404).send({
+                    error: 'Venda não encontrada'
+                });
+            }
+
+            // Deletar primeiro a venda (devido à relação com produto)
+            await prisma.sale.delete({
+                where: {
+                    id: saleId
+                }
+            });
+
+            // Deletar o produto associado
+            await prisma.product.delete({
+                where: {
+                    id: existingSale.products_id
+                }
+            });
+
+            return reply.status(200).send({
+                message: 'Venda deletada com sucesso'
+            });
+        } catch (err) {
+            fastify.log.error(err);
+            return reply.status(500).send({
+                error: 'Erro ao deletar venda'
+            });
+        }
+    });
+
+    // Rota para listar vendas por brand
+    fastify.get('/list-by-brand/:brandId', {
+        preHandler: async (request, reply) => {
+            try {
+                await request.jwtVerify();
+            } catch (err) {
+                reply.send(err);
+            }
+        }
+    }, async (request, reply) => {
+        try {
+            const { brandId } = request.params as { brandId: string };
+
+            if (!brandId) {
+                return reply.status(400).send({
+                    error: 'ID da marca é obrigatório'
+                });
+            }
+
+            // Verificar se a marca existe
+            const existingBrand = await prisma.brand.findUnique({
+                where: {
+                    id: brandId
+                }
+            });
+
+            if (!existingBrand) {
+                return reply.status(404).send({
+                    error: 'Marca não encontrada'
+                });
+            }
+
+            // Buscar vendas da marca
+            const sales = await prisma.sale.findMany({
+                where: {
+                    brand_id: brandId
+                },
+                include: {
+                    client: {
+                        select: {
+                            id: true,
+                            full_name: true,
+                            email: true,
+                            phone: true
+                        }
+                    },
+                    products: {
+                        select: {
+                            id: true,
+                            type_of_cold_storage: true,
+                            dimentions: true,
+                            capacity: true,
+                            observations: true
+                        }
+                    },
+                    brand: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    }
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                }
+            });
+
+            return reply.status(200).send({
+                message: 'Vendas encontradas',
+                brand: existingBrand,
+                sales: sales,
+                total: sales.length
+            });
+        } catch (err) {
+            fastify.log.error(err);
+            return reply.status(500).send({
+                error: 'Erro ao buscar vendas'
+            });
+        }
+    });
 }
