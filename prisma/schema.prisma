@@ -95,7 +95,7 @@ model Sale {
   brand_id String
   client_id String
 
-  sale_date DateTime
+  sale_date DateTime @default(now())
   origin_sale String
   seller String
 
